@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS (TAMPILAN ELEGAN)
+# 2. CSS (TAMPILAN ELEGAN & GRADASI)
 # ==========================================
 st.markdown("""
 <style>
@@ -126,7 +126,7 @@ def load_data():
         df = pd.read_csv("dataset_prediksi_harga_beras_final.csv")
         df = df[df['Tahun'].between(2022, 2024)]
     except Exception:
-        # Data Dummy (Hanya jika file asli gagal load)
+        # Data Dummy (Backup jika file gagal)
         np.random.seed(42)
         kabupatens = ['Cianjur', 'Karawang', 'Indramayu', 'Subang', 'Garut', 'Tasikmalaya', 'Bogor', 'Bandung', 'Cirebon', 'Sukabumi']
         years = [2022, 2023, 2024]
@@ -181,7 +181,7 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Filter Visualisasi Dipindah ke Sidebar agar rapi
+    # --- LOGIKA FILTER VISUALISASI DIPERBAIKI ---
     if menu == "📈 Visualisasi Data":
         st.markdown('<div class="sidebar-header">🛠️ PENGATURAN GRAFIK</div>', unsafe_allow_html=True)
         jenis_chart = st.selectbox("Jenis Grafik:", ["Line Chart (Tren)", "Bar Chart", "Scatter Plot"])
@@ -191,10 +191,20 @@ with st.sidebar:
         if jenis_chart != "Line Chart (Tren)":
             filter_tahun_vis = st.selectbox("Pilih Tahun:", list_tahun, index=len(list_tahun)-1)
         
-        # 2. Filter Kabupaten (BARU DITAMBAHKAN)
+        # 2. Filter Kabupaten (FITUR BARU PILIH SEMUA)
         st.markdown("<br><b>Filter Wilayah:</b>", unsafe_allow_html=True)
+        
+        # Checkbox untuk memilih semua
+        pilih_semua = st.checkbox("Tampilkan Semua Wilayah", value=True)
+        
         all_kab = df['Kabupaten'].unique()
-        filter_kab_vis = st.multiselect("Pilih Kabupaten:", options=all_kab, default=all_kab[:5])
+        
+        if pilih_semua:
+            filter_kab_vis = all_kab # Jika dicentang, otomatis ambil semua
+            st.info("ℹ️ Menampilkan data seluruh kabupaten.")
+        else:
+            # Jika tidak dicentang, user pilih manual
+            filter_kab_vis = st.multiselect("Pilih Kabupaten:", options=all_kab, default=all_kab[:3])
 
 # ==========================================
 # 6. HEADER UTAMA
@@ -219,16 +229,16 @@ if menu == "📈 Visualisasi Data":
     with st.container():
         st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         
-        # LOGIKA FILTERING VISUALISASI
+        # LOGIKA FILTERING DATA
         df_vis = df.copy()
         
-        # 1. Terapkan Filter Kabupaten (Jika ada yang dipilih)
-        if filter_kab_vis:
+        # 1. Terapkan Filter Wilayah (Sudah otomatis handle All/Partial)
+        if len(filter_kab_vis) > 0:
             df_vis = df_vis[df_vis['Kabupaten'].isin(filter_kab_vis)]
         else:
-            st.warning("⚠️ Silakan pilih minimal satu Kabupaten di Sidebar.")
+            st.warning("⚠️ Mohon pilih minimal satu wilayah di sidebar (atau centang 'Tampilkan Semua').")
             st.stop()
-            
+
         # 2. Terapkan Filter Tahun (Khusus Bar & Scatter)
         if jenis_chart != "Line Chart (Tren)":
             df_vis = df_vis[df_vis['Tahun'] == filter_tahun_vis]
@@ -241,7 +251,8 @@ if menu == "📈 Visualisasi Data":
             
         elif jenis_chart == "Bar Chart":
             df_vis = df_vis.sort_values("Rata_Rata_Harga_Beras", ascending=False)
-            fig = px.bar(df_vis, x="Kabupaten", y="Rata_Rata_Harga_Beras", color="Rata_Rata_Harga_Beras", color_continuous_scale="Teal", title=f"Perbandingan Harga Tahun {filter_tahun_vis}")
+            # Menggunakan GnBu agar tidak Error ValueError
+            fig = px.bar(df_vis, x="Kabupaten", y="Rata_Rata_Harga_Beras", color="Rata_Rata_Harga_Beras", color_continuous_scale="GnBu", title=f"Perbandingan Harga Tahun {filter_tahun_vis}")
             st.plotly_chart(fig, use_container_width=True)
             
         elif jenis_chart == "Scatter Plot":
@@ -312,9 +323,10 @@ elif menu == "📂 Data Tahun 2022-2024":
     
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        filter_kab = st.multiselect("Filter Wilayah:", options=df["Kabupaten"].unique(), default=[])
+        # Pilihan Wilayah dengan "Kosong = Semua"
+        filter_kab = st.multiselect("Filter Wilayah (Kosongkan untuk Semua):", options=df["Kabupaten"].unique(), default=[])
     with col_f2:
-        filter_tahun = st.multiselect("Filter Tahun:", options=sorted(df["Tahun"].unique()), default=[])
+        filter_tahun = st.multiselect("Filter Tahun (Kosongkan untuk Semua):", options=sorted(df["Tahun"].unique()), default=[])
     
     df_filtered = df.copy()
     if filter_kab:
@@ -328,7 +340,7 @@ elif menu == "📂 Data Tahun 2022-2024":
     if tinggi > 500: tinggi = 500
     
     try:
-        # PERBAIKAN: Menggunakan cmap 'GnBu' (Valid) bukan 'Teal' (Invalid)
+        # MENGGUNAKAN GnBu AGAR TIDAK ERROR
         st.dataframe(
             df_filtered.style.format({
                 "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
