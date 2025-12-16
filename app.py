@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS (TAMPILAN MODERN & INPUT JELAS)
+# 2. CSS (FIX DARK MODE & TAMPILAN MODERN)
 # ==========================================
 st.markdown("""
 <style>
@@ -27,11 +27,12 @@ st.markdown("""
         font-family: 'Poppins', sans-serif;
     }
 
+    /* 1. PAKSA BACKGROUND APLIKASI JADI TERANG */
     .stApp {
         background-color: #f4f7f6;
     }
 
-    /* --- PERBAIKAN INPUT BOX & DROPDOWN --- */
+    /* 2. PERBAIKAN INPUT BOX (AGAR TIDAK INVISIBLE DI DARK MODE) */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     div[data-testid="stNumberInput"] div[data-baseweb="input"] > div {
@@ -42,18 +43,26 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }
 
+    /* PENTING: Paksa warna font input menjadi HITAM */
+    input[type="text"], input[type="number"] {
+        color: #2c3e50 !important;
+        -webkit-text-fill-color: #2c3e50 !important;
+        caret-color: #2c3e50 !important;
+    }
+
+    /* PENTING: Paksa warna font dropdown/select menjadi HITAM */
+    div[data-baseweb="select"] span {
+        color: #2c3e50 !important;
+    }
+
+    /* Efek Hover Input */
     div[data-baseweb="select"] > div:hover,
     div[data-baseweb="input"] > div:hover {
         border-color: #2a5298 !important;
         box-shadow: 0 4px 8px rgba(42, 82, 152, 0.2) !important;
     }
 
-    div[data-baseweb="select"] span {
-        color: #2c3e50 !important;
-        font-weight: 500;
-    }
-    
-    /* Header Gradient */
+    /* 3. HEADER GRADIENT */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         padding: 30px;
@@ -72,8 +81,13 @@ st.markdown("""
         font-size: 2.2rem;
         font-weight: 700;
     }
+    .main-header p {
+        color: #e0e0e0 !important;
+        font-size: 1.0rem;
+        margin: 0;
+    }
 
-    /* Card Putih */
+    /* 4. CARD PUTIH */
     .custom-card {
         background-color: white;
         padding: 25px;
@@ -82,8 +96,12 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.04);
         margin-bottom: 20px;
     }
+    /* Paksa teks dalam card jadi gelap */
+    .custom-card p, .custom-card h1, .custom-card h2, .custom-card h3, .custom-card label {
+        color: #2c3e50 !important;
+    }
 
-    /* Judul Section */
+    /* 5. JUDUL SECTION */
     .section-title {
         color: #1e3c72;
         font-weight: 700;
@@ -94,10 +112,10 @@ st.markdown("""
         padding-left: 12px;
     }
 
-    /* Tombol */
+    /* 6. TOMBOL */
     div.stButton > button {
         background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
+        color: white !important;
         border: none;
         padding: 12px 28px;
         font-weight: 600;
@@ -108,10 +126,14 @@ st.markdown("""
         transform: scale(1.02);
     }
 
-    /* Sidebar */
+    /* 7. SIDEBAR */
     section[data-testid="stSidebar"] {
         background-color: #ffffff;
         border-right: 1px solid #e0e0e0;
+    }
+    /* Teks Sidebar Gelap */
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {
+        color: #2c3e50 !important;
     }
     .sidebar-header {
         font-weight: 700;
@@ -129,9 +151,11 @@ st.markdown("""
 @st.cache_data
 def load_data():
     try:
+        # Coba load file asli
         df = pd.read_csv("dataset_prediksi_harga_beras_final.csv")
         df = df[df['Tahun'].between(2022, 2024)]
     except FileNotFoundError:
+        # Jika file tidak ada, buat data dummy (Anti Error)
         np.random.seed(42)
         kabupatens = [
             'Cianjur', 'Karawang', 'Indramayu', 'Subang', 'Garut', 
@@ -178,10 +202,6 @@ X_test_scaled = scaler.transform(X_test)
 model = LinearRegression()
 model.fit(X_train_scaled, y_train)
 
-y_pred_test = model.predict(X_test_scaled)
-r2 = r2_score(y_test, y_pred_test)
-rmse = mean_squared_error(y_test, y_pred_test) ** 0.5
-
 # ==========================================
 # 5. SIDEBAR
 # ==========================================
@@ -197,6 +217,7 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # Filter Visualisasi hanya muncul di menu Visualisasi
     if menu == "📈 Visualisasi Data":
         st.markdown('<div class="sidebar-header">🛠️ PENGATURAN GRAFIK</div>', unsafe_allow_html=True)
         jenis_chart = st.selectbox(
@@ -258,24 +279,49 @@ if menu == "📈 Visualisasi Data":
 elif menu == "🔮 Prediksi Harga":
     st.markdown('<div class="section-title">Simulasi & Prediksi</div>', unsafe_allow_html=True)
     st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     with col1:
         kab_in = st.selectbox("📍 Pilih Kabupaten", df["Kabupaten"].unique())
         thn_in = st.selectbox("📅 Tahun Target", [2025, 2026, 2027])
+        
+        # Ambil rata-rata data lama sebagai default value
         hist = df[df["Kabupaten"] == kab_in]
-        luas_in = st.number_input("Luas Lahan (Ha)", value=float(hist["Luas_Lahan_Padi_(Ha)"].mean()))
-        prod_in = st.number_input("Produktivitas (Ku/Ha)", value=float(hist["Produktivitas_Tanaman_Padi_(Ku/ha)"].mean()))
+        def_luas = float(hist["Luas_Lahan_Padi_(Ha)"].mean()) if not hist.empty else 10000.0
+        def_prod = float(hist["Produktivitas_Tanaman_Padi_(Ku/ha)"].mean()) if not hist.empty else 60.0
+        
+        luas_in = st.number_input("Luas Lahan (Ha)", value=def_luas)
+        prod_in = st.number_input("Produktivitas (Ku/Ha)", value=def_prod)
+        
     with col2:
-        total_in = st.number_input("Total Produksi (Ton)", value=float(hist["Produksi_Padi_(Ton)"].mean()))
-        kons_in = st.number_input("Konsumsi (Ton)", value=float(hist["Konsumsi_Beras"].mean()))
+        def_total = float(hist["Produksi_Padi_(Ton)"].mean()) if not hist.empty else 50000.0
+        def_kons = float(hist["Konsumsi_Beras"].mean()) if not hist.empty else 5000.0
+        
+        total_in = st.number_input("Total Produksi (Ton)", value=def_total)
+        kons_in = st.number_input("Konsumsi (Ton)", value=def_kons)
+        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🚀 PREDIKSI", use_container_width=True):
-            input_data = {"Tahun": thn_in, "Luas_Lahan_Padi_(Ha)": luas_in, "Produktivitas_Tanaman_Padi_(Ku/ha)": prod_in, "Produksi_Padi_(Ton)": total_in, "Konsumsi_Beras": kons_in}
+            # Siapkan data input
+            input_data = {
+                "Tahun": thn_in, 
+                "Luas_Lahan_Padi_(Ha)": luas_in, 
+                "Produktivitas_Tanaman_Padi_(Ku/ha)": prod_in, 
+                "Produksi_Padi_(Ton)": total_in, 
+                "Konsumsi_Beras": kons_in
+            }
+            # One-hot encoding manual agar sama dengan format training
             for col in X.columns:
                 if col.startswith("Kabupaten_"):
                     input_data[col] = 1 if col == f"Kabupaten_{kab_in}" else 0
-            res = model.predict(scaler.transform(pd.DataFrame([input_data])[X.columns]))[0]
-            st.success(f"Prediksi Harga: Rp {res:,.2f}")
+            
+            # Prediksi
+            input_df = pd.DataFrame([input_data])[X.columns]
+            res = model.predict(scaler.transform(input_df))[0]
+            
+            st.success(f"Prediksi Harga Beras di {kab_in} tahun {thn_in}:")
+            st.markdown(f"<h2 style='color: #2a5298; margin:0;'>Rp {res:,.2f}</h2>", unsafe_allow_html=True)
+            
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- MENU 3: DATA TAHUN 2022-2024 ---
@@ -284,44 +330,27 @@ elif menu == "📂 Data Tahun 2022-2024":
     
     st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     
-    # --- BAGIAN FILTER DATA ---
+    # Filter
     st.markdown("##### 🔍 Filter Pencarian")
     col_f1, col_f2 = st.columns(2)
-    
     with col_f1:
-        filter_kab = st.multiselect(
-            "Pilih Wilayah (Kosongkan untuk Semua):",
-            options=df["Kabupaten"].unique(),
-            default=[]
-        )
-        
+        filter_kab = st.multiselect("Pilih Wilayah (Kosongkan untuk Semua):", options=df["Kabupaten"].unique(), default=[])
     with col_f2:
-        filter_tahun = st.multiselect(
-            "Pilih Tahun (Kosongkan untuk Semua):",
-            options=sorted(df["Tahun"].unique()),
-            default=[]
-        )
+        filter_tahun = st.multiselect("Pilih Tahun (Kosongkan untuk Semua):", options=sorted(df["Tahun"].unique()), default=[])
     
-    # --- LOGIKA PENERAPAN FILTER ---
     df_filtered = df.copy()
-    
     if filter_kab:
         df_filtered = df_filtered[df_filtered["Kabupaten"].isin(filter_kab)]
-        
     if filter_tahun:
         df_filtered = df_filtered[df_filtered["Tahun"].isin(filter_tahun)]
     
     st.markdown("---")
     st.write(f"Menampilkan **{len(df_filtered)}** data:")
     
-    # === PERBAIKAN UTAMA: TINGGI TABEL DINAMIS ===
-    # Rumus: (Jumlah Data x 35 pixel) + 3 pixel margin
-    # Maksimal tinggi 500 pixel agar tetap bisa di-scroll jika datanya ratusan
+    # Tinggi Tabel Dinamis
     tinggi_dinamis = int((len(df_filtered) + 1) * 35 + 3)
-    if tinggi_dinamis > 500:
-        tinggi_dinamis = 500
+    if tinggi_dinamis > 500: tinggi_dinamis = 500
     
-    # Tampilkan Tabel
     st.dataframe(
         df_filtered.style.format({
             "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
@@ -330,6 +359,6 @@ elif menu == "📂 Data Tahun 2022-2024":
             "Konsumsi_Beras": "{:,.0f}"
         }).background_gradient(cmap="Blues", subset=["Rata_Rata_Harga_Beras"]),
         use_container_width=True,
-        height=tinggi_dinamis # Menerapkan tinggi dinamis di sini
+        height=tinggi_dinamis
     )
     st.markdown('</div>', unsafe_allow_html=True)
