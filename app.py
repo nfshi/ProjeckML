@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 
-# 2. CSS 
+# 2. CSS (FIX TOTAL WARNA & TAMPILAN)
 
 st.markdown("""
 <style>
@@ -31,26 +31,35 @@ st.markdown("""
     .stApp {
         background-color: #f4f7f6;
     }
+    
+    /* 2. PAKSA SEMUA TEKS MENJADI HITAM/GELAP (SOLUSI NAMBAH LABEL) */
+    .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp label, .stApp span, .stApp div {
+        color: #2c3e50 !important;
+    }
 
-    /* 2. PERBAIKAN INPUT BOX (AGAR TIDAK INVISIBLE DI DARK MODE) */
+    /* Khusus Label di atas Input (Tahun, Konsumsi, dll) */
+    div[data-testid="stWidgetLabel"] p {
+        color: #2c3e50 !important;
+        font-weight: 600;
+    }
+
+    /* 3. PERBAIKAN INPUT BOX & DROPDOWN */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     div[data-testid="stNumberInput"] div[data-baseweb="input"] > div {
         background-color: #ffffff !important;
         border: 2px solid #b0b8c4 !important;
         border-radius: 8px !important;
-        color: #2c3e50 !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }
 
-    /* PENTING: Paksa warna font input menjadi HITAM */
+    /* Teks di dalam Input Box */
     input[type="text"], input[type="number"] {
-        color: #2c3e50 !important;
+        color: #2c3e50 !important; 
         -webkit-text-fill-color: #2c3e50 !important;
-        caret-color: #2c3e50 !important;
     }
-
-    /* PENTING: Paksa warna font dropdown/select menjadi HITAM */
+    
+    /* Teks Pilihan di Dropdown */
     div[data-baseweb="select"] span {
         color: #2c3e50 !important;
     }
@@ -59,15 +68,13 @@ st.markdown("""
     div[data-baseweb="select"] > div:hover,
     div[data-baseweb="input"] > div:hover {
         border-color: #2a5298 !important;
-        box-shadow: 0 4px 8px rgba(42, 82, 152, 0.2) !important;
     }
 
-    /* 3. HEADER GRADIENT */
+    /* 4. HEADER */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         padding: 30px;
         border-radius: 15px;
-        color: white;
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         margin-bottom: 25px;
         display: flex;
@@ -75,19 +82,12 @@ st.markdown("""
         gap: 20px;
     }
     
-    .main-header h1 {
+    /* Override warna khusus untuk Header agar tetap Putih */
+    .main-header h1, .main-header p, .main-header div {
         color: white !important;
-        margin: 0;
-        font-size: 2.2rem;
-        font-weight: 700;
-    }
-    .main-header p {
-        color: #e0e0e0 !important;
-        font-size: 1.0rem;
-        margin: 0;
     }
 
-    /* 4. CARD PUTIH */
+    /* 5. CARD PUTIH */
     .custom-card {
         background-color: white;
         padding: 25px;
@@ -96,31 +96,19 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.04);
         margin-bottom: 20px;
     }
-    /* Paksa teks dalam card jadi gelap */
-    .custom-card p, .custom-card h1, .custom-card h2, .custom-card h3, .custom-card label {
-        color: #2c3e50 !important;
-    }
-
-    /* 5. JUDUL SECTION */
-    .section-title {
-        color: #1e3c72;
-        font-weight: 700;
-        font-size: 1.4rem;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        border-left: 5px solid #2a5298;
-        padding-left: 12px;
-    }
 
     /* 6. TOMBOL */
     div.stButton > button {
         background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
-        color: white !important;
+        color: white !important; /* Teks tombol wajib putih */
         border: none;
         padding: 12px 28px;
         font-weight: 600;
         border-radius: 8px;
         transition: transform 0.2s;
+    }
+    div.stButton > button p {
+        color: white !important; /* Paksa teks dalam tombol putih */
     }
     div.stButton > button:hover {
         transform: scale(1.02);
@@ -131,22 +119,22 @@ st.markdown("""
         background-color: #ffffff;
         border-right: 1px solid #e0e0e0;
     }
-    /* Teks Sidebar Gelap */
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {
-        color: #2c3e50 !important;
-    }
     .sidebar-header {
         font-weight: 700;
-        color: #1e3c72;
+        color: #1e3c72 !important;
         font-size: 1.1rem;
         margin-top: 20px;
         margin-bottom: 10px;
     }
+    
+    /* Perbaikan warna tabel */
+    div[data-testid="stDataFrame"] div {
+        color: #2c3e50 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-
-# 3. LOAD DATA (2022-2024)
+# 3. LOAD DATA
 
 @st.cache_data
 def load_data():
@@ -154,8 +142,8 @@ def load_data():
         # Coba load file asli
         df = pd.read_csv("dataset_prediksi_harga_beras_final.csv")
         df = df[df['Tahun'].between(2022, 2024)]
-    except FileNotFoundError:
-        # Jika file tidak ada, buat data dummy (Anti Error)
+    except Exception: # Tangkap semua error jika file gagal load
+        # Data Dummy (Backup Plan)
         np.random.seed(42)
         kabupatens = [
             'Cianjur', 'Karawang', 'Indramayu', 'Subang', 'Garut', 
@@ -190,17 +178,21 @@ df = load_data()
 
 # 4. TRAINING MODEL
 
-df_encoded = pd.get_dummies(df, columns=["Kabupaten"], drop_first=True)
-X = df_encoded.drop("Rata_Rata_Harga_Beras", axis=1) 
-y = df_encoded["Rata_Rata_Harga_Beras"]
+try:
+    df_encoded = pd.get_dummies(df, columns=["Kabupaten"], drop_first=True)
+    X = df_encoded.drop("Rata_Rata_Harga_Beras", axis=1) 
+    y = df_encoded["Rata_Rata_Harga_Beras"]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
 
-model = LinearRegression()
-model.fit(X_train_scaled, y_train)
+    model = LinearRegression()
+    model.fit(X_train_scaled, y_train)
+except Exception as e:
+    st.error(f"Terjadi kesalahan pada pemrosesan data: {e}")
+    st.stop()
 
 
 # 5. SIDEBAR
@@ -217,7 +209,6 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Filter Visualisasi hanya muncul di menu Visualisasi
     if menu == "📈 Visualisasi Data":
         st.markdown('<div class="sidebar-header">🛠️ PENGATURAN GRAFIK</div>', unsafe_allow_html=True)
         jenis_chart = st.selectbox(
@@ -228,6 +219,7 @@ with st.sidebar:
         list_tahun = sorted(df['Tahun'].unique())
         if jenis_chart != "Line Chart (Tren Waktu)":
             filter_tahun_vis = st.selectbox("Pilih Tahun Data:", list_tahun, index=len(list_tahun)-1)
+
 
 # 6. HEADER UTAMA
 
@@ -284,7 +276,6 @@ elif menu == "🔮 Prediksi Harga":
         kab_in = st.selectbox("📍 Pilih Kabupaten", df["Kabupaten"].unique())
         thn_in = st.selectbox("📅 Tahun Target", [2025, 2026, 2027])
         
-        # Ambil rata-rata data lama sebagai default value
         hist = df[df["Kabupaten"] == kab_in]
         def_luas = float(hist["Luas_Lahan_Padi_(Ha)"].mean()) if not hist.empty else 10000.0
         def_prod = float(hist["Produktivitas_Tanaman_Padi_(Ku/ha)"].mean()) if not hist.empty else 60.0
@@ -301,7 +292,6 @@ elif menu == "🔮 Prediksi Harga":
         
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🚀 PREDIKSI", use_container_width=True):
-            # Siapkan data input
             input_data = {
                 "Tahun": thn_in, 
                 "Luas_Lahan_Padi_(Ha)": luas_in, 
@@ -309,17 +299,15 @@ elif menu == "🔮 Prediksi Harga":
                 "Produksi_Padi_(Ton)": total_in, 
                 "Konsumsi_Beras": kons_in
             }
-            # One-hot encoding manual agar sama dengan format training
             for col in X.columns:
                 if col.startswith("Kabupaten_"):
                     input_data[col] = 1 if col == f"Kabupaten_{kab_in}" else 0
             
-            # Prediksi
             input_df = pd.DataFrame([input_data])[X.columns]
             res = model.predict(scaler.transform(input_df))[0]
             
             st.success(f"Prediksi Harga Beras di {kab_in} tahun {thn_in}:")
-            st.markdown(f"<h2 style='color: #2a5298; margin:0;'>Rp {res:,.2f}</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='color: #2a5298 !important; margin:0;'>Rp {res:,.2f}</h2>", unsafe_allow_html=True)
             
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -329,7 +317,6 @@ elif menu == "📂 Data Tahun 2022-2024":
     
     st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     
-    # Filter
     st.markdown("##### 🔍 Filter Pencarian")
     col_f1, col_f2 = st.columns(2)
     with col_f1:
@@ -346,18 +333,33 @@ elif menu == "📂 Data Tahun 2022-2024":
     st.markdown("---")
     st.write(f"Menampilkan **{len(df_filtered)}** data:")
     
-    # Tinggi Tabel Dinamis
     tinggi_dinamis = int((len(df_filtered) + 1) * 35 + 3)
     if tinggi_dinamis > 500: tinggi_dinamis = 500
     
-    st.dataframe(
-        df_filtered.style.format({
-            "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
-            "Produksi_Padi_(Ton)": "{:,.0f}",
-            "Luas_Lahan_Padi_(Ha)": "{:,.0f}",
-            "Konsumsi_Beras": "{:,.0f}"
-        }).background_gradient(cmap="Blues", subset=["Rata_Rata_Harga_Beras"]),
-        use_container_width=True,
-        height=tinggi_dinamis
-    )
+    # MENAMPILKAN TABEL TANPA GRADIENT JIKA MATPLOTLIB BELUM ADA
+    # (Untuk mencegah error jika Anda belum update requirements.txt)
+    try:
+        st.dataframe(
+            df_filtered.style.format({
+                "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
+                "Produksi_Padi_(Ton)": "{:,.0f}",
+                "Luas_Lahan_Padi_(Ha)": "{:,.0f}",
+                "Konsumsi_Beras": "{:,.0f}"
+            }).background_gradient(cmap="Blues", subset=["Rata_Rata_Harga_Beras"]),
+            use_container_width=True,
+            height=tinggi_dinamis
+        )
+    except ImportError:
+        # Jika matplotlib lupa diinstall, tabel tetap muncul (tapi polos)
+        st.warning("⚠️ Tips: Tambahkan 'matplotlib' ke requirements.txt agar tabel berwarna.")
+        st.dataframe(
+            df_filtered.style.format({
+                "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
+                "Produksi_Padi_(Ton)": "{:,.0f}",
+                "Luas_Lahan_Padi_(Ha)": "{:,.0f}",
+                "Konsumsi_Beras": "{:,.0f}"
+            }),
+            use_container_width=True,
+            height=tinggi_dinamis
+        )
     st.markdown('</div>', unsafe_allow_html=True)
