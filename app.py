@@ -6,18 +6,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
-# ==========================================
+
 # 1. KONFIGURASI HALAMAN
-# ==========================================
+
 st.set_page_config(
     page_title="Sistem Cerdas Harga Pangan",
     page_icon="🌾",
     layout="wide"
 )
 
-# ==========================================
-# 2. CSS (TAMPILAN ELEGAN & GRADASI)
-# ==========================================
+# 2. CSS 
+
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
@@ -117,9 +116,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
+
 # 3. LOAD DATA
-# ==========================================
+
 @st.cache_data
 def load_data():
     try:
@@ -149,9 +148,9 @@ def load_data():
 
 df = load_data()
 
-# ==========================================
+
 # 4. TRAINING MODEL
-# ==========================================
+
 try:
     df_encoded = pd.get_dummies(df, columns=["Kabupaten"], drop_first=True)
     X = df_encoded.drop("Rata_Rata_Harga_Beras", axis=1) 
@@ -166,9 +165,9 @@ try:
 except Exception:
     pass 
 
-# ==========================================
+
 # 5. SIDEBAR
-# ==========================================
+
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2933/2933942.png", width=70)
     st.markdown('<div class="sidebar-header">MENU UTAMA</div>', unsafe_allow_html=True)
@@ -206,9 +205,8 @@ with st.sidebar:
             # Jika tidak dicentang, user pilih manual
             filter_kab_vis = st.multiselect("Pilih Kabupaten:", options=all_kab, default=all_kab[:3])
 
-# ==========================================
 # 6. HEADER UTAMA
-# ==========================================
+
 st.markdown("""
 <div class="main-header">
     <div style="font-size: 3.5rem;">🌾</div>
@@ -219,9 +217,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ==========================================
+
 # 7. LOGIKA KONTEN
-# ==========================================
+
 
 # --- MENU 1: VISUALISASI ---
 if menu == "📈 Visualisasi Data":
@@ -285,7 +283,7 @@ elif menu == "🔮 Prediksi Harga":
         total_in = st.number_input("Total Produksi (Ton)", value=def_total)
         
         kons_in = st.number_input(
-            "Konsumsi Beras Perkapita (Kg/Tahun)", 
+            "Konsumsi Beras Perkapita ", 
             value=def_kons, 
             format="%.3f",
             step=0.001
@@ -364,3 +362,4 @@ elif menu == "📂 Data Tahun 2022-2024":
         )
     
     st.markdown('</div>', unsafe_allow_html=True)
+
