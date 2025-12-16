@@ -6,18 +6,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
-#
+# ==========================================
 # 1. KONFIGURASI HALAMAN
-
+# ==========================================
 st.set_page_config(
     page_title="Sistem Cerdas Harga Pangan",
     page_icon="🌾",
     layout="wide"
 )
 
-
-# 2. CSS (BACKGROUND GRADASI & PERBAIKAN TAMPILAN)
-
+# ==========================================
+# 2. CSS (TAMPILAN ELEGAN)
+# ==========================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
@@ -26,47 +26,42 @@ st.markdown("""
         font-family: 'Poppins', sans-serif;
     }
 
-    /* 1. UBAH BACKGROUND JADI GRADASI (TIDAK POLOS PUTIH) */
+    /* Background Gradasi Soft */
     .stApp {
         background: linear-gradient(to bottom right, #e0f7fa, #e1bee7);
-        /* Alternatif: background-color: #e3f2fd; (Biru Muda Solid) */
     }
     
-    /* 2. TEKS HITAM/GELAP AGAR KONTRAS DENGAN BACKGROUND */
+    /* Warna Teks Hitam/Gelap */
     .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp label, .stApp span, .stApp div {
         color: #2c3e50 !important;
     }
 
-    /* Khusus Label di atas Input */
+    /* Label Input */
     div[data-testid="stWidgetLabel"] p {
         color: #1e3c72 !important;
         font-weight: 700;
     }
 
-    /* 3. PERBAIKAN INPUT BOX */
+    /* Input Box */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     div[data-testid="stNumberInput"] div[data-baseweb="input"] > div {
-        background-color: #ffffff !important; /* Kotak tetap putih agar bersih */
+        background-color: #ffffff !important;
         border: 2px solid #90a4ae !important;
         border-radius: 10px !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
     }
 
-    /* Teks di dalam Input */
+    /* Teks Input */
     input[type="text"], input[type="number"] {
         color: #2c3e50 !important; 
         -webkit-text-fill-color: #2c3e50 !important;
         font-weight: 600;
     }
     
-    div[data-baseweb="select"] span {
-        color: #2c3e50 !important;
-    }
-
-    /* 4. HEADER */
+    /* Header */
     .main-header {
-        background: linear-gradient(135deg, #006064 0%, #00838f 100%); /* Hijau Teal Gelap */
+        background: linear-gradient(135deg, #006064 0%, #00838f 100%);
         padding: 30px;
         border-radius: 15px;
         box-shadow: 0 10px 20px rgba(0,0,0,0.15);
@@ -76,15 +71,13 @@ st.markdown("""
         gap: 20px;
         color: white !important;
     }
-    
-    /* Override warna teks header agar Putih */
     .main-header h1, .main-header p, .main-header div {
         color: white !important;
     }
 
-    /* 5. CARD / KONTAINER PUTIH */
+    /* Card */
     .custom-card {
-        background-color: rgba(255, 255, 255, 0.9); /* Putih sedikit transparan */
+        background-color: rgba(255, 255, 255, 0.95);
         padding: 25px;
         border-radius: 15px;
         border: 1px solid #ffffff;
@@ -92,7 +85,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* 6. TOMBOL */
+    /* Tombol */
     div.stButton > button {
         background: linear-gradient(90deg, #006064 0%, #0097a7 100%);
         color: white !important;
@@ -101,7 +94,6 @@ st.markdown("""
         font-weight: 600;
         border-radius: 8px;
         transition: transform 0.2s;
-        box-shadow: 0 4px 8px rgba(0,96,100, 0.3);
     }
     div.stButton > button p {
         color: white !important;
@@ -110,7 +102,7 @@ st.markdown("""
         transform: scale(1.05);
     }
 
-    /* 7. SIDEBAR */
+    /* Sidebar */
     section[data-testid="stSidebar"] {
         background-color: #ffffff;
         border-right: 1px solid #cfd8dc;
@@ -122,29 +114,21 @@ st.markdown("""
         margin-top: 20px;
         margin-bottom: 10px;
     }
-    
-    /* Tabel */
-    div[data-testid="stDataFrame"] {
-        background-color: white;
-        padding: 10px;
-        border-radius: 10px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-
+# ==========================================
 # 3. LOAD DATA
-
+# ==========================================
 @st.cache_data
 def load_data():
     try:
-        # Coba load file asli
         df = pd.read_csv("dataset_prediksi_harga_beras_final.csv")
         df = df[df['Tahun'].between(2022, 2024)]
     except Exception:
-        # Data Dummy (Jika file error)
+        # Data Dummy (Hanya jika file asli gagal load)
         np.random.seed(42)
-        kabupatens = ['Cianjur', 'Karawang', 'Indramayu', 'Subang', 'Garut', 'Tasikmalaya', 'Bogor']
+        kabupatens = ['Cianjur', 'Karawang', 'Indramayu', 'Subang', 'Garut', 'Tasikmalaya', 'Bogor', 'Bandung', 'Cirebon', 'Sukabumi']
         years = [2022, 2023, 2024]
         
         data = []
@@ -155,7 +139,7 @@ def load_data():
                     'Tahun': year,
                     'Luas_Lahan_Padi_(Ha)': np.random.uniform(5000, 20000),
                     'Produktivitas_Tanaman_Padi_(Ku/ha)': np.random.uniform(50, 65),
-                    'Konsumsi_Beras': np.random.uniform(1.4, 1.8), # Format Desimal Kecil
+                    'Konsumsi_Beras': np.random.uniform(1.4, 1.8),
                     'Produksi_Padi_(Ton)': np.random.randint(40000, 100000),
                     'Rata_Rata_Harga_Beras': np.random.randint(11000, 14000)
                 }
@@ -165,9 +149,9 @@ def load_data():
 
 df = load_data()
 
-
+# ==========================================
 # 4. TRAINING MODEL
-
+# ==========================================
 try:
     df_encoded = pd.get_dummies(df, columns=["Kabupaten"], drop_first=True)
     X = df_encoded.drop("Rata_Rata_Harga_Beras", axis=1) 
@@ -180,11 +164,11 @@ try:
     model = LinearRegression()
     model.fit(X_train_scaled, y_train)
 except Exception:
-    pass # Silent fail agar UI tetap jalan jika data error
+    pass 
 
-
+# ==========================================
 # 5. SIDEBAR
-
+# ==========================================
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2933/2933942.png", width=70)
     st.markdown('<div class="sidebar-header">MENU UTAMA</div>', unsafe_allow_html=True)
@@ -197,17 +181,24 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # Filter Visualisasi Dipindah ke Sidebar agar rapi
     if menu == "📈 Visualisasi Data":
         st.markdown('<div class="sidebar-header">🛠️ PENGATURAN GRAFIK</div>', unsafe_allow_html=True)
         jenis_chart = st.selectbox("Jenis Grafik:", ["Line Chart (Tren)", "Bar Chart", "Scatter Plot"])
         
+        # 1. Filter Tahun
         list_tahun = sorted(df['Tahun'].unique())
         if jenis_chart != "Line Chart (Tren)":
             filter_tahun_vis = st.selectbox("Pilih Tahun:", list_tahun, index=len(list_tahun)-1)
+        
+        # 2. Filter Kabupaten (BARU DITAMBAHKAN)
+        st.markdown("<br><b>Filter Wilayah:</b>", unsafe_allow_html=True)
+        all_kab = df['Kabupaten'].unique()
+        filter_kab_vis = st.multiselect("Pilih Kabupaten:", options=all_kab, default=all_kab[:5])
 
-
+# ==========================================
 # 6. HEADER UTAMA
-
+# ==========================================
 st.markdown("""
 <div class="main-header">
     <div style="font-size: 3.5rem;">🌾</div>
@@ -218,9 +209,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
+# ==========================================
 # 7. LOGIKA KONTEN
-
+# ==========================================
 
 # --- MENU 1: VISUALISASI ---
 if menu == "📈 Visualisasi Data":
@@ -228,17 +219,33 @@ if menu == "📈 Visualisasi Data":
     with st.container():
         st.markdown('<div class="custom-card">', unsafe_allow_html=True)
         
+        # LOGIKA FILTERING VISUALISASI
+        df_vis = df.copy()
+        
+        # 1. Terapkan Filter Kabupaten (Jika ada yang dipilih)
+        if filter_kab_vis:
+            df_vis = df_vis[df_vis['Kabupaten'].isin(filter_kab_vis)]
+        else:
+            st.warning("⚠️ Silakan pilih minimal satu Kabupaten di Sidebar.")
+            st.stop()
+            
+        # 2. Terapkan Filter Tahun (Khusus Bar & Scatter)
+        if jenis_chart != "Line Chart (Tren)":
+            df_vis = df_vis[df_vis['Tahun'] == filter_tahun_vis]
+
+        # RENDER GRAFIK
         if jenis_chart == "Line Chart (Tren)":
-            fig = px.line(df, x="Tahun", y="Rata_Rata_Harga_Beras", color="Kabupaten", markers=True, title="Tren Harga")
+            fig = px.line(df_vis, x="Tahun", y="Rata_Rata_Harga_Beras", color="Kabupaten", markers=True, title="Tren Harga Beras")
             fig.update_xaxes(type='category')
             st.plotly_chart(fig, use_container_width=True)
+            
         elif jenis_chart == "Bar Chart":
-            df_vis = df[df['Tahun'] == filter_tahun_vis].sort_values("Rata_Rata_Harga_Beras", ascending=False)
-            fig = px.bar(df_vis, x="Kabupaten", y="Rata_Rata_Harga_Beras", color="Rata_Rata_Harga_Beras", color_continuous_scale="Teal")
+            df_vis = df_vis.sort_values("Rata_Rata_Harga_Beras", ascending=False)
+            fig = px.bar(df_vis, x="Kabupaten", y="Rata_Rata_Harga_Beras", color="Rata_Rata_Harga_Beras", color_continuous_scale="Teal", title=f"Perbandingan Harga Tahun {filter_tahun_vis}")
             st.plotly_chart(fig, use_container_width=True)
+            
         elif jenis_chart == "Scatter Plot":
-            df_vis = df[df['Tahun'] == filter_tahun_vis]
-            fig = px.scatter(df_vis, x="Produksi_Padi_(Ton)", y="Rata_Rata_Harga_Beras", size="Luas_Lahan_Padi_(Ha)", color="Kabupaten")
+            fig = px.scatter(df_vis, x="Produksi_Padi_(Ton)", y="Rata_Rata_Harga_Beras", size="Luas_Lahan_Padi_(Ha)", color="Kabupaten", title=f"Korelasi Produksi vs Harga ({filter_tahun_vis})")
             st.plotly_chart(fig, use_container_width=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -253,7 +260,6 @@ elif menu == "🔮 Prediksi Harga":
         kab_in = st.selectbox("📍 Pilih Kabupaten", df["Kabupaten"].unique())
         thn_in = st.selectbox("📅 Tahun Target", [2025, 2026, 2027])
         
-        # Ambil rata-rata history untuk default value
         hist = df[df["Kabupaten"] == kab_in]
         def_luas = float(hist["Luas_Lahan_Padi_(Ha)"].mean()) if not hist.empty else 10000.0
         def_prod = float(hist["Produktivitas_Tanaman_Padi_(Ku/ha)"].mean()) if not hist.empty else 60.0
@@ -267,12 +273,10 @@ elif menu == "🔮 Prediksi Harga":
         
         total_in = st.number_input("Total Produksi (Ton)", value=def_total)
         
-        # PERBAIKAN: Input Konsumsi sekarang mendukung desimal (3 angka belakang koma)
-        # Label juga sudah diganti menjadi Perkapita
         kons_in = st.number_input(
-            "Konsumsi Beras Perkapita", 
+            "Konsumsi Beras Perkapita (Kg/Tahun)", 
             value=def_kons, 
-            format="%.3f", # Format 3 desimal (contoh: 1.613)
+            format="%.3f",
             step=0.001
         )
         
@@ -320,36 +324,31 @@ elif menu == "📂 Data Tahun 2022-2024":
     
     st.markdown("---")
     
-    # TINGGI TABEL OTOMATIS
     tinggi = int((len(df_filtered) + 1) * 35 + 3)
     if tinggi > 500: tinggi = 500
     
-    # PERBAIKAN FORMAT TABEL (AGAR TIDAK DIBULATKAN)
-    # Konsumsi ditampilkan dengan 3 desimal (contoh: 1.613)
-    # Produktivitas 2 desimal
     try:
-        st.dataframe(
-            df_filtered.style.format({
-                "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
-                "Produksi_Padi_(Ton)": "{:,.0f}",       # Produksi biasanya bulat (Ton)
-                "Luas_Lahan_Padi_(Ha)": "{:,.0f}",      # Luas biasanya bulat
-                "Produktivitas_Tanaman_Padi_(Ku/ha)": "{:.2f}", # Ada koma
-                "Konsumsi_Beras": "{:.3f}"              # PENTING: Menampilkan 1.613 (3 desimal)
-            }).background_gradient(cmap="Teal", subset=["Rata_Rata_Harga_Beras"]),
-            use_container_width=True,
-            height=tinggi
-        )
-    except ImportError:
-        # Fallback jika matplotlib belum diinstall
+        # PERBAIKAN: Menggunakan cmap 'GnBu' (Valid) bukan 'Teal' (Invalid)
         st.dataframe(
             df_filtered.style.format({
                 "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
                 "Produksi_Padi_(Ton)": "{:,.0f}",
-                "Konsumsi_Beras": "{:.3f}" # Tetap menjaga format desimal
+                "Luas_Lahan_Padi_(Ha)": "{:,.0f}",
+                "Produktivitas_Tanaman_Padi_(Ku/ha)": "{:.2f}",
+                "Konsumsi_Beras": "{:.3f}"
+            }).background_gradient(cmap="GnBu", subset=["Rata_Rata_Harga_Beras"]), 
+            use_container_width=True,
+            height=tinggi
+        )
+    except ImportError:
+        st.dataframe(
+            df_filtered.style.format({
+                "Rata_Rata_Harga_Beras": "Rp {:,.0f}",
+                "Produksi_Padi_(Ton)": "{:,.0f}",
+                "Konsumsi_Beras": "{:.3f}"
             }),
             use_container_width=True,
             height=tinggi
         )
     
     st.markdown('</div>', unsafe_allow_html=True)
-
